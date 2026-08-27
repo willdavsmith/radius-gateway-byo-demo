@@ -184,7 +184,7 @@ jobs:
 
       - name: Clean up unused routes Gateway infrastructure
         if: ${{ inputs.resource_type == 'application' }}
-        uses: radius-project/radius/.github/extension/actions/manage-routes-gateway@000e3749e3b072b75eb6a46ae171688e417bfb5c
+        uses: radius-project/radius/.github/extension/actions/manage-routes-gateway@89de29b188dc09da4c9c94ff9409388705a4486f
         with:
           mode: cleanup
           target-kubeconfig: ${{ env.RADIUS_TARGET_KUBECONFIG }}
