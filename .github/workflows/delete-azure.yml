@@ -101,7 +101,7 @@ jobs:
             --file "$RADIUS_TARGET_KUBECONFIG"
 
       - name: Set up control plane
-        uses: radius-project/radius/.github/extension/actions/setup-control-plane@000e3749e3b072b75eb6a46ae171688e417bfb5c
+        uses: radius-project/radius/.github/extension/actions/setup-control-plane@main
 
       - name: Project cloud OIDC tokens into Radius pods
         run: |
@@ -158,7 +158,8 @@ jobs:
           echo "External deployment target configured."
 
       - name: Restore Radius state
-        uses: radius-project/radius/.github/extension/actions/restore-state@000e3749e3b072b75eb6a46ae171688e417bfb5c
+        id: restore-state
+        uses: radius-project/radius/.github/extension/actions/restore-state@main
         with:
           namespace: ${{ vars.KUBERNETES_NAMESPACE || 'default' }}
 
@@ -175,7 +176,7 @@ jobs:
           echo "✅ Cloud credentials registered with Radius."
 
       - name: Delete Radius resource
-        uses: radius-project/radius/.github/extension/actions/delete-resource@000e3749e3b072b75eb6a46ae171688e417bfb5c
+        uses: radius-project/radius/.github/extension/actions/delete-resource@main
         with:
           resource-type: ${{ inputs.resource_type }}
           name: ${{ inputs.name }}
@@ -196,4 +197,6 @@ jobs:
 
       - name: Teardown
         if: always()
-        uses: radius-project/radius/.github/extension/actions/teardown@000e3749e3b072b75eb6a46ae171688e417bfb5c
+        uses: radius-project/radius/.github/extension/actions/teardown@main
+        with:
+          state-restored: ${{ steps.restore-state.outputs.state-restored }}

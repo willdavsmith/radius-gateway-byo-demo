@@ -313,7 +313,7 @@ case "${ACTION}" in
         set_environment_variables
         verify_environment_variables
         verify_byo_infrastructure
-        echo "ready: deploy .radius/app.bicep from the Copilot Radius canvas"
+        echo "ready: trigger run-rad-commands.yml for GitHub Environment ${ENVIRONMENT}"
         ;;
     verify)
         require_tools
