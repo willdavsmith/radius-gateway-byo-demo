@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ -z "${BASH_VERSION:-}" ] || shopt -oq posix 2>/dev/null; then
+    echo "error: run this script as ./setup.sh or bash setup.sh, not sh setup.sh" >&2
+    exit 2
+fi
+
 set -euo pipefail
 
 readonly REPO="${DEMO_REPO:-willdavsmith/radius-gateway-byo-demo}"

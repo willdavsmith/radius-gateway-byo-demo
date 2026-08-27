@@ -11,7 +11,15 @@ export DEMO_ACK_AKS_CONTEXT="$(kubectl config current-context)"
 ./setup.sh setup
 ```
 
-Open the repository in the GitHub Copilot app and deploy the root `.radius/app.bicep` with environment `azure`.
+Until `radius-project/radius#12854` merges, do not use the Radius canvas Deploy button: the current canvas regenerates the provider workflow from `main` and removes the feature-under-test. Trigger the already-pinned workflow directly:
+
+```shell
+gh workflow run run-rad-commands.yml \
+  --repo willdavsmith/radius-gateway-byo-demo \
+  -f environment=azure
+```
+
+Follow the run in GitHub Actions or with `gh run watch`.
 
 ```shell
 ./setup.sh verify
@@ -21,9 +29,14 @@ kubectl get gateway radius -n radius-system
 
 Expected result: `radius-demo-byo/radius-demo-byo` is programmed, the application HTTPRoute is accepted, and `radius-system/radius` does not exist.
 
-Delete `gateway-byo-demo` in the Radius canvas. Radius retains the BYO stack. Remove only this demo's resources and variables with:
+Trigger the pinned delete workflow directly. Radius retains the BYO stack. After the workflow finishes, remove only this demo's resources and variables with:
 
 ```shell
+gh workflow run delete-application.yml \
+  --repo willdavsmith/radius-gateway-byo-demo \
+  -f environment=azure \
+  -f application=gateway-byo-demo
+
 ./setup.sh teardown
 ```
 
