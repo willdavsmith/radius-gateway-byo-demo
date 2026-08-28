@@ -351,7 +351,7 @@ jobs:
           app-file: ${{ env.APP_FILE }}
 
       - name: Ensure routes Gateway infrastructure
-        uses: radius-project/radius/.github/extension/actions/manage-routes-gateway@d44caa65732e63f7a3ff6a97e8f2f420d6f781bb
+        uses: radius-project/radius/.github/extension/actions/manage-routes-gateway@3aa81af42ae9a0f7d8413c6b3f6dc88c4a326726
         with:
           mode: ensure
           target-kubeconfig: ${{ env.RADIUS_TARGET_KUBECONFIG }}
