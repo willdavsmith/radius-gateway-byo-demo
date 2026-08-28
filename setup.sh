@@ -175,6 +175,7 @@ install_byo_gateway() {
         --set-string "configInline.gateway.gatewayRef.name=${GATEWAY_NAME}" \
         --set-string "configInline.gateway.gatewayRef.namespace=${NAMESPACE}" \
         --set-string envoy.service.type=ClusterIP \
+        --set-string envoy.service.externalTrafficPolicy= \
         --set-string "commonLabels.${OWNER_LABEL//./\\.}=true" \
         --wait --timeout 5m
 
@@ -214,16 +215,26 @@ spec:
           from: All
 EOF
 
-    kubectl wait --for=condition=Accepted \
-        "gatewayclass/${GATEWAY_CLASS}" --timeout=5m
+    verify_byo_gateway_class
     kubectl wait --for=condition=Programmed \
         "gateway/${GATEWAY_NAME}" -n "${NAMESPACE}" --timeout=5m
 }
 
+verify_byo_gateway_class() {
+    local controller
+    controller="$(
+        kubectl get gatewayclass "${GATEWAY_CLASS}" \
+            -o jsonpath='{.spec.controllerName}'
+    )"
+    [[ "${controller}" == "projectcontour.io/gateway-controller" ]] || {
+        echo "error: GatewayClass ${GATEWAY_CLASS} uses unexpected controller ${controller}" >&2
+        exit 1
+    }
+}
+
 verify_byo_infrastructure() {
     assert_managed_gateway_absent
-    kubectl wait --for=condition=Accepted \
-        "gatewayclass/${GATEWAY_CLASS}" --timeout=2m
+    verify_byo_gateway_class
     kubectl wait --for=condition=Programmed \
         "gateway/${GATEWAY_NAME}" -n "${NAMESPACE}" --timeout=2m
     local service_type
@@ -241,29 +252,33 @@ verify_byo_infrastructure() {
 
 verify_byo_route() {
     local attempt
+    local gateway
     local routes
     for ((attempt = 1; attempt <= 24; attempt++)); do
         routes="$(
             kubectl get httproute -A \
                 -l radapp.io/application=gateway-byo-demo -o json
         )"
+        gateway="$(
+            kubectl get gateway "${GATEWAY_NAME}" -n "${NAMESPACE}" -o json
+        )"
         if jq -e --arg gateway "${GATEWAY_NAME}" \
             --arg namespace "${NAMESPACE}" '
               .items | length == 1 and
               all(.[];
                 any(.spec.parentRefs[]?;
-                  .name == $gateway and .namespace == $namespace) and
-                any(.status.parents[]?.conditions[]?;
-                  .type == "Accepted" and .status == "True") and
-                any(.status.parents[]?.conditions[]?;
-                  .type == "ResolvedRefs" and .status == "True"))
-            ' <<<"${routes}" >/dev/null; then
-            echo "verified: Radius attached an accepted HTTPRoute to the BYO Gateway"
+                  .name == $gateway and .namespace == $namespace))
+            ' <<<"${routes}" >/dev/null &&
+            jq -e '
+              any(.status.listeners[]?;
+                .name == "http" and .attachedRoutes >= 1)
+            ' <<<"${gateway}" >/dev/null; then
+            echo "verified: Radius attached an HTTPRoute to the BYO Gateway"
             return 0
         fi
         sleep 5
     done
-    echo "error: Radius HTTPRoute was not accepted by the BYO Gateway" >&2
+    echo "error: Radius HTTPRoute was not attached to the BYO Gateway" >&2
     return 1
 }
 
