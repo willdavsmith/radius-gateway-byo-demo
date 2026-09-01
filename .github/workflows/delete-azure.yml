@@ -7,7 +7,7 @@
 # plane, connects to the user's AKS cluster, restores persisted state, deletes the
 # requested resource (running any recipe deletes against the target cluster), then
 # persists the updated state again and tears the control plane down. The provider-
-# agnostic phases are shared composite actions in radius-project/radius; only the
+# agnostic phases are shared composite actions in radius-project/ai-extensions; only the
 # Azure-specific steps live here.
 name: Radius - Delete (Azure)
 
@@ -33,7 +33,7 @@ permissions:
   packages: write
 
 concurrency:
-  group: radius-environment-${{ github.repository }}-${{ inputs.environment }}
+  group: radius-routes-gateway-${{ github.repository }}
   cancel-in-progress: false
 
 env:
@@ -101,7 +101,7 @@ jobs:
             --file "$RADIUS_TARGET_KUBECONFIG"
 
       - name: Set up control plane
-        uses: radius-project/ai-extensions/.github/extension/actions/setup-control-plane@0b12c9ed2531d3be4c2ffa18c4b1e6b237b1407c
+        uses: radius-project/ai-extensions/.github/extension/actions/setup-control-plane@246f09f3b6313c705fb38d5ae7276356a5c9aba8
 
       - name: Project cloud OIDC tokens into Radius pods
         run: |
@@ -159,7 +159,7 @@ jobs:
 
       - name: Restore Radius state
         id: restore-state
-        uses: radius-project/ai-extensions/.github/extension/actions/restore-state@0b12c9ed2531d3be4c2ffa18c4b1e6b237b1407c
+        uses: radius-project/ai-extensions/.github/extension/actions/restore-state@246f09f3b6313c705fb38d5ae7276356a5c9aba8
         with:
           namespace: ${{ vars.KUBERNETES_NAMESPACE || 'default' }}
 
@@ -176,7 +176,7 @@ jobs:
           echo "✅ Cloud credentials registered with Radius."
 
       - name: Delete Radius resource
-        uses: radius-project/ai-extensions/.github/extension/actions/delete-resource@0b12c9ed2531d3be4c2ffa18c4b1e6b237b1407c
+        uses: radius-project/ai-extensions/.github/extension/actions/delete-resource@246f09f3b6313c705fb38d5ae7276356a5c9aba8
         with:
           resource-type: ${{ inputs.resource_type }}
           name: ${{ inputs.name }}
@@ -184,7 +184,7 @@ jobs:
 
       - name: Clean up unused routes Gateway infrastructure
         if: ${{ inputs.resource_type == 'application' }}
-        uses: radius-project/radius/.github/extension/actions/manage-routes-gateway@3aa81af42ae9a0f7d8413c6b3f6dc88c4a326726
+        uses: radius-project/ai-extensions/.github/extension/actions/manage-routes-gateway@246f09f3b6313c705fb38d5ae7276356a5c9aba8
         with:
           mode: cleanup
           target-kubeconfig: ${{ env.RADIUS_TARGET_KUBECONFIG }}
@@ -197,6 +197,6 @@ jobs:
 
       - name: Teardown
         if: always()
-        uses: radius-project/ai-extensions/.github/extension/actions/teardown@0b12c9ed2531d3be4c2ffa18c4b1e6b237b1407c
+        uses: radius-project/ai-extensions/.github/extension/actions/teardown@246f09f3b6313c705fb38d5ae7276356a5c9aba8
         with:
           state-restored: ${{ steps.restore-state.outputs.state-restored }}
