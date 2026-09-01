@@ -118,6 +118,8 @@ jobs:
 
       - name: Load Radius contrib catalog
         uses: radius-project/ai-extensions/.github/extension/actions/load-contrib-catalog@0b12c9ed2531d3be4c2ffa18c4b1e6b237b1407c
+        env:
+          YQ_INSTALL_DIR: ${{ runner.temp }}/radius-tools
 
       - name: Project cloud OIDC tokens into Radius pods
         run: |
